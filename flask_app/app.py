@@ -12,7 +12,7 @@ USER_CREDENTIALS = {
 
 @app.route('/')
 def home():
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -27,7 +27,7 @@ def login():
         else:
             flash('Invalid credentials, please try again.')
 
-    return render_template('login.html')
+    return render_template('index.html')
 
 @app.route('/hello')
 def hello():
@@ -78,6 +78,7 @@ def display():
     name = request.args.get('name')
     department = request.args.get('department')
     payment_state = request.args.get('payment_state')
+
     return render_template('display.html', name=name, department=department, payment_state=payment_state)
 
 if __name__ == '__main__':
