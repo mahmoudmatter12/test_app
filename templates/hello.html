@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <style>
+        video {
+            width: 400px;
+            height: 400px;
+            border: 2px solid black;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <video id="video" autoplay></video>
+    <canvas id="canvas" width="400" height="400"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+
+        // Ask for camera permissions and stream the video
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+            .then((stream) => {
+                video.srcObject = stream;
+                video.play();
+                requestAnimationFrame(tick);
+            })
+            .catch((err) => {
+                console.error("Camera access denied: ", err);
+            });
+
+        // Main loop that checks for QR codes
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                // Draw the video frame on the canvas to process it
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Get the image data from the canvas
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+                if (code) {
+                    console.log("QR Code detected: ", code.data);
+
+                    // Send QR code data to Flask backend via fetch
+                    fetch('/qr-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ qr_content: code.data })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            console.log("QR code content sent to the server.");
+                        } else {
+                            console.log("Failed to send QR code content.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error sending QR code content to server: ", error);
+                    });
+
+                    // Optionally stop the video stream once a QR code is found
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+            }
+
+            // Keep scanning for QR codes
+            requestAnimationFrame(tick);
+        }
+    </script>
+</body>
+</html>
