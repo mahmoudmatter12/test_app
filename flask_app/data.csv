@@ -1,0 +1,4 @@
+unique_id,name,age,department,payment_state
+231053079,John Doe,30,Engineering,true
+987654,Jane Smith,25,Marketing,true
+456789,Emily Johnson,35,HR,flase

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import csv
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # For session management
@@ -42,14 +43,42 @@ def logout():
     flash('You have been logged out.')
     return redirect(url_for('login'))
 
-# Route to receive QR code data
+
+def search_csv_for_id(unique_id):
+    file_path = '/home/mgtm98/mahmoud/flask_app/data.csv'  # Path to your CSV file
+
+    with open(file_path, mode='r') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            if row['unique_id'] == unique_id:
+                return row['name'], row['department'], row['payment_state']
+    
+    return None  # Return None if not found
+
 @app.route('/qr-data', methods=['POST'])
 def qr_data():
     qr_content = request.json.get('qr_content', '')
+
     if qr_content:
-        print(f"QR Code Content: {qr_content}")  # Output to terminal
-        return jsonify({'status': 'success', 'message': 'QR content received'})
+        data = search_csv_for_id(qr_content)
+        if data:
+            # Prepare the redirect URL with the retrieved data
+            name, department, payment_state = data
+            return jsonify({
+                'status': 'success',
+                'redirect_url': url_for('display', name=name, department=department, payment_state=payment_state)
+            })
+        else:
+            return jsonify({'status': 'error', 'message': 'ID not found in database'})
+    
     return jsonify({'status': 'error', 'message': 'No content received'})
+
+@app.route('/display')
+def display():
+    name = request.args.get('name')
+    department = request.args.get('department')
+    payment_state = request.args.get('payment_state')
+    return render_template('display.html', name=name, department=department, payment_state=payment_state)
 
 if __name__ == '__main__':
     app.run(debug=True)

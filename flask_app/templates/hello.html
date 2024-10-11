@@ -63,9 +63,10 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            console.log("QR code content sent to the server.");
+                            // Redirect to the new display page with the retrieved data
+                            window.location.href = data.redirect_url;
                         } else {
-                            console.log("Failed to send QR code content.");
+                            alert(data.message);  // Alert if the ID is not found
                         }
                     })
                     .catch(error => {
