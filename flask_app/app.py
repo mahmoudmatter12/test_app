@@ -12,7 +12,7 @@ USER_CREDENTIALS = {
 
 @app.route('/')
 def home():
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
